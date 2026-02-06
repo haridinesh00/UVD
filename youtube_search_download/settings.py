@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -23,7 +24,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-jhk$3okdo7j0+)pn&ww6g14cw=lxhd2ji5+dw==x$iui&o58@a'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# CHANGED: Set to False for production deployment. 
+# Change back to True if you are testing on your local laptop.
+DEBUG = False
 
 ALLOWED_HOSTS = ['*']
 
@@ -43,6 +46,8 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    # CHANGED: WhiteNoise must be listed directly after SecurityMiddleware
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -117,3 +122,10 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+
+# CHANGED: Added STATIC_ROOT. This fixes the "ImproperlyConfigured" error.
+# It tells Django where to collect files during deployment.
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+# CHANGED: Enable WhiteNoise storage to serve files efficiently in production
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'

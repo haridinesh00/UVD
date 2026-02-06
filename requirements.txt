@@ -4,4 +4,5 @@ djangorestframework==3.16.1
 gunicorn==25.0.2
 packaging==26.0
 sqlparse==0.5.5
+whitenoise==6.11.0
 yt-dlp==2026.2.4
