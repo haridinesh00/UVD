@@ -5,11 +5,6 @@ from rest_framework.response import Response
 from yt_dlp import YoutubeDL
 import os
 
-# Create your views here.
-
-def example_view(request):
-    return JsonResponse({"message": "This is an example API response."})
-
 class YouTubeSearchAPIView(APIView):
     def get(self, request):
         query = request.GET.get('query', '')

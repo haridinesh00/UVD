@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search YouTube</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .search-container {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 20px;
+            background: #fff;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+        .search-bar {
+            width: 70%;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .search-button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            margin-left: 10px;
+        }
+        .search-button:hover {
+            background-color: #0056b3;
+        }
+        .results {
+            margin-top: 20px;
+        }
+        .result-item {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #fff;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+        .result-item a {
+            text-decoration: none;
+            color: #007bff;
+            font-weight: bold;
+        }
+        .result-item a:hover {
+            text-decoration: underline;
+        }
+        .download-button {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 8px 12px;
+            background-color: #28a745;
+            color: #fff !important;
+            text-decoration: none;
+            border-radius: 4px;
+        }
+        .download-button:hover {
+            background-color: #1e7e34;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="search-container">
+            <h1>Search YouTube</h1>
+            <form method="GET" action="">
+                <input type="text" name="query" class="search-bar" placeholder="Search for videos...">
+                <button type="submit" class="search-button">Search</button>
+            </form>
+        </div>
+        <div class="results">
+            {% for video in results %}
+            <div class="result-item">
+                <h3><a href="{{ video.url }}" target="_blank">{{ video.title }}</a></h3>
+                <p>Duration: {{ video.duration }}</p>
+                <a href="/download/?url={{ video.url }}" class="download-button">Download</a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</body>
+</html>
