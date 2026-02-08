@@ -1,9 +1,12 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from yt_dlp import YoutubeDL
 from django.http import FileResponse
 import os
 
 def homepage(request):
+    return render(request, 'master/homepage.html')
+
+def search_results(request):
     query = request.GET.get('query')
     results = []
     if query:
@@ -15,7 +18,7 @@ def homepage(request):
         with YoutubeDL(ydl_opts) as ydl:
             search_results = ydl.extract_info(f"ytsearch10:{query}", download=False)
             results = search_results.get('entries', [])
-    return render(request, 'master/homepage.html', {'results': results})
+    return render(request, 'master/results.html', {'results': results, 'query': query})
 
 def download_video(request):
     video_url = request.GET.get('url')
