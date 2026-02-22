@@ -6,11 +6,12 @@ from django.conf import settings
 from celery import shared_task
 from .models import PuzzleLevel
 
-# 1. Define the exact JSON structure we want Gemini to return
+# 1. Update the JSON structure to force Gemini to think about the nouns
 class RebusPuzzle(BaseModel):
     final_answer: str = Field(description="The compound word or famous phrase (e.g., 'Bill Gates')")
-    search_term_1: str = Field(description="The first literal visual clue (e.g., 'dollar bill')")
-    search_term_2: str = Field(description="The second literal visual clue (e.g., 'gateway of India')")
+    reasoning: str = Field(description="Explain why the two visual clues are unambiguous NOUNS, not adjectives.")
+    search_term_1: str = Field(description="A highly specific, single concrete NOUN (e.g., 'ceramic pot', NOT 'pottery').")
+    search_term_2: str = Field(description="A highly specific, single concrete NOUN (e.g., 'hair', NOT 'hairy').")
 
 class PuzzleList(BaseModel):
     puzzles: list[RebusPuzzle]
@@ -45,15 +46,15 @@ def generate_new_levels(num_levels=5):
     # Initialize the GenAI client using the key from Django settings
     client = genai.Client(api_key=settings.GEMINI_API_KEY)
     
-    # 3. THE ADVANCED PROMPT: Strict instructions for difficulty and originality
+    # 3. THE PROMPT: Now with aggressive rules against adjectives and clutter
     prompt = f"""
     You are an expert puzzle designer making highly difficult, clever Rebus visual puzzles.
     Generate {num_levels} puzzles strictly based on this theme: {selected_theme}.
     
-    CRITICAL RULES:
-    1. DO NOT use basic, easy compound words like 'Hot Dog', 'Sunflower', or 'Rainbow'.
-    2. Think conceptually or phonetically. For example, for "Bluetooth", clue 1 could be a "blue tooth" or "blue paint" + "dentist".
-    3. The two search terms MUST be literal, physical objects that exist on Unsplash.com.
+    CRITICAL RULES FOR STOCK PHOTOGRAPHY:
+    1. NO ADJECTIVES OR ABSTRACT CONCEPTS. Do not use words like 'hairy', 'fast', 'cold', or 'mute'. Unsplash will return a random object (like a dog for 'hairy') and the player will be confused.
+    2. USE CONCRETE, UNAMBIGUOUS NOUNS ONLY. If you want 'hair', search for 'hair comb' or 'braid'. If you want 'mute', search for 'duct tape over mouth' or 'padlock'.
+    3. SINGLE SUBJECT FOCUS. The object must be easily recognizable as the main subject of a photo. Do not use complex scenes (like 'mixing console' for a button).
     4. DO NOT generate ANY of these previously used answers: {used_answers_str}.
     """
     
@@ -71,9 +72,11 @@ def generate_new_levels(num_levels=5):
     puzzle_data = response.parsed
     
     for item in puzzle_data.puzzles:
-        print(f"\n🔍 Fetching images for: {item.final_answer} ({item.search_term_1} + {item.search_term_2})")
+        print(f"\n🔍 Fetching images for: {item.final_answer}")
+        print(f"   Reasoning: {item.reasoning}")
+        print(f"   Clues: {item.search_term_1} + {item.search_term_2}")
         
-        # 5. Fetch images from Unsplash using the Gemini-generated search terms
+        # 5. Fetch images from Unsplash using the optimized search terms
         img1_url = fetch_unsplash_image(item.search_term_1)
         img2_url = fetch_unsplash_image(item.search_term_2)
         
@@ -95,9 +98,13 @@ def generate_new_levels(num_levels=5):
 def fetch_unsplash_image(query):
     """
     Hits the Unsplash API and returns the URL for the first 'regular' sized image result.
+    Injects hidden keywords to force clean, uncluttered photos.
     """
     api_key = settings.UNSPLASH_API_KEY 
-    url = f"https://api.unsplash.com/search/photos?query={query}&per_page=1"
+    
+    # THE FIX: Inject hidden keywords to force clean, uncluttered photos
+    optimized_query = f"{query} minimalist isolated single object"
+    url = f"https://api.unsplash.com/search/photos?query={optimized_query}&per_page=1&content_filter=high"
     
     headers = {"Authorization": f"Client-ID {api_key}"}
     
