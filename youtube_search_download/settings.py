@@ -13,8 +13,12 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 import os
 from pathlib import Path
 
+from dotenv import load_dotenv
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+load_dotenv(os.path.join(BASE_DIR, '.env'))
 
 
 # Quick-start development settings - unsuitable for production
@@ -28,7 +32,8 @@ SECRET_KEY = 'django-insecure-jhk$3okdo7j0+)pn&ww6g14cw=lxhd2ji5+dw==x$iui&o58@a
 # Change back to True if you are testing on your local laptop.
 DEBUG = False
 
-ALLOWED_HOSTS = ['*']
+# ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
 
 
 # Application definition
@@ -43,6 +48,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'api',
     'master',
+    'rebux'
 ]
 
 MIDDLEWARE = [
@@ -59,20 +65,7 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'youtube_search_download.urls'
 
-TEMPLATES = [
-    {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
-            ],
-        },
-    },
-]
+CSRF_TRUSTED_ORIGINS = ['']
 
 WSGI_APPLICATION = 'youtube_search_download.wsgi.application'
 
@@ -87,6 +80,22 @@ DATABASES = {
     }
 }
 
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        # Update this line to point to your new root templates folder
+        'DIRS': [BASE_DIR / 'templates'], 
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'context_processors': [
+                'django.template.context_processors.debug',
+                'django.template.context_processors.request',
+                'django.contrib.auth.context_processors.auth',
+                'django.contrib.messages.context_processors.messages',
+            ],
+        },
+    },
+]
 
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
@@ -130,3 +139,10 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # CHANGED: Enable WhiteNoise storage to serve files efficiently in production
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+UNSPLASH_API_KEY = os.getenv("UNSPLASH_API_KEY")
+
+# Celery Configuration Options
+CELERY_BROKER_URL = 'redis://localhost:6379/0'
+CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
