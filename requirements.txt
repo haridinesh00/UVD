@@ -6,3 +6,9 @@ packaging==26.0
 sqlparse==0.5.5
 whitenoise==6.11.0
 yt-dlp==2026.2.4
+google-genai
+pydantic
+requests
+python-dotenv
+celery
+redis
