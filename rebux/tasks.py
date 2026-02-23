@@ -35,8 +35,6 @@ def generate_new_levels(num_levels=5):
         "Historical Events and Famous Historical Figures",
         "General Science, Astronomy, and Nature Concepts",
         "General Pop Culture and Blockbuster Movies",
-        "Retro Video Games (e.g., Pokemon Emerald, Need for Speed, Captain Claw)",
-        "Malayalam Cinema (e.g., famous movies, actors like Mohanlal or Jagathy)",
         "Thriller and Mystery Novels (e.g., The Silent Patient, Stieg Larsson books)",
         "Complex Compound Words (Difficult level)"
     ]

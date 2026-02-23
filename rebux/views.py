@@ -1,4 +1,4 @@
-from django.views.generic import FormView, TemplateView
+from django.views.generic import FormView, TemplateView, View
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
 from .models import PuzzleLevel
@@ -47,8 +47,9 @@ class PlayGameView(FormView):
             total_levels = PuzzleLevel.objects.count()
             levels_remaining = total_levels - self.request.session['current_level']
             
-            if levels_remaining < 3:
-                generate_new_levels.delay(5) # Triggers your background worker
+            # if levels_remaining < 3:
+                # generate_new_levels.delay(5) # Triggers your background worker
+                # generate_new_levels(5) # For testing without Celery, call the function directly
                 
             return super().form_valid(form)
         else:
@@ -64,3 +65,9 @@ class WinGameView(TemplateView):
         context = super().get_context_data(**kwargs)
         context['message'] = "Congratulations! You have beaten all available levels of Rebux!"
         return context
+    
+class GenerateLevelsView(View):
+    def get(self, request, *args, **kwargs):
+        # This view can be triggered manually to generate new levels without Celery
+        generate_new_levels(3)  # Generate 5 new levels
+        return redirect('play_game')
