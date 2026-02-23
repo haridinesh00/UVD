@@ -12,91 +12,31 @@
             --text: #1F2937;
             --error: #EF4444;
             --success: #10B981;
+            --warning: #F59E0B;
         }
         
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
-            background-color: var(--background);
-            color: var(--text);
-            max-width: 500px; 
-            margin: 0 auto; 
-            padding: 20px; 
-            text-align: center; 
-        }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: var(--background); color: var(--text); max-width: 500px; margin: 0 auto; padding: 20px; text-align: center; }
 
-        /* Top Bar */
-        .header { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center;
-            background: var(--surface); 
-            padding: 15px 20px; 
-            border-radius: 12px; 
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            margin-bottom: 25px;
-        }
+        .header { display: flex; justify-content: space-between; align-items: center; background: var(--surface); padding: 15px 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 15px; }
         .level-text { font-size: 1.25rem; font-weight: 700; margin: 0; }
         .score-text { font-size: 1.25rem; color: var(--success); font-weight: 800; margin: 0; }
         
-        /* Image Collage */
-        .collage { 
-            display: grid; 
-            grid-template-columns: 1fr 1fr; 
-            gap: 12px; 
-            margin-bottom: 30px; 
-        }
-        .collage img { 
-            width: 100%; 
-            aspect-ratio: 1 / 1; 
-            object-fit: cover; 
-            border-radius: 12px; 
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1); 
-            background-color: #E5E7EB; /* Placeholder color while loading */
-        }
+        /* New Category Badge */
+        .category-badge { display: inline-block; background-color: #E0E7FF; color: var(--primary); padding: 6px 14px; border-radius: 20px; font-size: 0.9rem; font-weight: 700; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 0.5px;}
+
+        .collage { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 25px; }
+        .collage img { width: 100%; aspect-ratio: 1 / 1; object-fit: cover; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); background-color: #E5E7EB; }
         
-        /* Form Elements */
-        .guess-input { 
-            width: 100%; 
-            box-sizing: border-box;
-            padding: 16px; 
-            font-size: 1.1rem; 
-            text-align: center; 
-            border: 2px solid #D1D5DB; 
-            border-radius: 12px; 
-            margin-bottom: 16px; 
-            transition: border-color 0.2s;
-        }
-        .guess-input:focus {
-            outline: none;
-            border-color: var(--primary);
-        }
+        .guess-input { width: 100%; box-sizing: border-box; padding: 16px; font-size: 1.1rem; text-align: center; border: 2px solid #D1D5DB; border-radius: 12px; margin-bottom: 16px; transition: border-color 0.2s; }
+        .guess-input:focus { outline: none; border-color: var(--primary); }
+        .submit-btn { width: 100%; padding: 16px; font-size: 1.1rem; font-weight: 700; background: var(--primary); color: white; border: none; border-radius: 12px; cursor: pointer; box-shadow: 0 4px 6px rgba(79, 70, 229, 0.3); transition: transform 0.1s; }
+        .submit-btn:active { transform: scale(0.98); }
         
-        .submit-btn { 
-            width: 100%;
-            padding: 16px; 
-            font-size: 1.1rem; 
-            font-weight: 700;
-            background: var(--primary); 
-            color: white; 
-            border: none; 
-            border-radius: 12px; 
-            cursor: pointer; 
-            box-shadow: 0 4px 6px rgba(79, 70, 229, 0.3);
-            transition: transform 0.1s, background-color 0.2s;
-        }
-        .submit-btn:active {
-            transform: scale(0.98);
-        }
+        .error-message { color: var(--error); font-weight: 600; margin-bottom: 16px; background: #FEE2E2; padding: 10px; border-radius: 8px; }
         
-        /* Alerts */
-        .error-message { 
-            color: var(--error); 
-            font-weight: 600; 
-            margin-bottom: 16px; 
-            background: #FEE2E2;
-            padding: 10px;
-            border-radius: 8px;
-        }
+        /* New Hint Box */
+        .hint-box { background-color: #FEF3C7; color: #92400E; padding: 12px; border-radius: 8px; font-weight: 600; margin-bottom: 20px; border: 1px solid #FDE68A; animation: fadeIn 0.5s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
@@ -105,21 +45,16 @@
         <p class="score-text">{{ score }} pts</p>
     </div>
 
+    <div class="category-badge">{{ puzzle.category }}</div>
+
     <div class="collage">
-        {% if puzzle.image_1_url %}
-            <img src="{{ puzzle.image_1_url }}" alt="Clue 1">
-        {% endif %}
-        {% if puzzle.image_2_url %}
-            <img src="{{ puzzle.image_2_url }}" alt="Clue 2">
-        {% endif %}
-        
-        {% if puzzle.image_3_url %}
-            <img src="{{ puzzle.image_3_url }}" alt="Clue 3">
-        {% endif %}
-        {% if puzzle.image_4_url %}
-            <img src="{{ puzzle.image_4_url }}" alt="Clue 4">
-        {% endif %}
+        {% if puzzle.image_1_url %}<img src="{{ puzzle.image_1_url }}" alt="Clue 1">{% endif %}
+        {% if puzzle.image_2_url %}<img src="{{ puzzle.image_2_url }}" alt="Clue 2">{% endif %}
     </div>
+
+    {% if show_hint %}
+        <div class="hint-box">💡 Hint: {{ puzzle.hint }}</div>
+    {% endif %}
 
     {% if message %}
         <div class="error-message">{{ message }}</div>

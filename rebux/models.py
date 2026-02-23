@@ -14,6 +14,10 @@ class PuzzleLevel(models.Model):
     
     correct_answer = models.CharField(max_length=100)
     
+    # NEW FIELDS
+    category = models.CharField(max_length=50, default="General")
+    hint = models.CharField(max_length=255, default="Keep thinking!")
+    
     def check_answer(self, guess):
         """
         Strips spaces and makes everything lowercase so the player isn't
