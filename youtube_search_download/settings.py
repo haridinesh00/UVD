@@ -33,7 +33,7 @@ SECRET_KEY = 'django-insecure-jhk$3okdo7j0+)pn&ww6g14cw=lxhd2ji5+dw==x$iui&o58@a
 DEBUG = False
 
 # ALLOWED_HOSTS = ['*']
-raw_allowed_host = os.getenv('ALLOWED_HOSTS')
+raw_allowed_hosts = os.getenv('ALLOWED_HOSTS')
 ALLOWED_HOSTS = raw_allowed_hosts.split(',')
 
 
