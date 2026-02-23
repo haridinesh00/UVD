@@ -33,7 +33,7 @@ SECRET_KEY = 'django-insecure-jhk$3okdo7j0+)pn&ww6g14cw=lxhd2ji5+dw==x$iui&o58@a
 DEBUG = False
 
 # ALLOWED_HOSTS = ['*']
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS')
 
 
 # Application definition
@@ -65,7 +65,7 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'youtube_search_download.urls'
 
-CSRF_TRUSTED_ORIGINS = ['']
+CSRF_TRUSTED_ORIGINS = os.getenv('CSRF_TRUSTED_ORIGINS')
 
 WSGI_APPLICATION = 'youtube_search_download.wsgi.application'
 
