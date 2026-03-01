@@ -65,6 +65,21 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+# ==========================================
+# BULLETPROOF SUPABASE SESSION CONFIGURATION
+# ==========================================
+
+# 1. Force Django to store sessions in the database (This is the default, but good to lock in)
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+
+# 2. Force the cookie to survive for 30 days. 
+# (By default, Django sets this to 1209600 seconds, which is exactly 2 weeks)
+SESSION_COOKIE_AGE = 2592000 
+
+# 3. Ensure they don't lose progress if they close the browser tab 
+# (This defaults to False, but we explicitly declare it for safety)
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False
+
 ROOT_URLCONF = 'youtube_search_download.urls'
 
 raw_csrf_origins = os.getenv('CSRF_TRUSTED_ORIGINS')
@@ -149,7 +164,25 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 UNSPLASH_API_KEY = os.getenv("UNSPLASH_API_KEY")
+GOOGLE_SEARCH_API_KEY = os.getenv("GOOGLE_SEARCH_API_KEY")
+GOOGLE_SEARCH_CX = os.getenv("GOOGLE_SEARCH_CX")
+
 
 # Celery Configuration Options
 CELERY_BROKER_URL = 'redis://localhost:6379/0'
 CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+
+# ==========================================
+# RENDER PROXY & COOKIE CONFIGURATION
+# ==========================================
+
+# 1. Tell Django it is sitting behind a proxy (Render) that handles HTTPS
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# 2. Enforce secure cookies (since Render provides free HTTPS)
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
+
+# 3. Ensure the browser doesn't block the cookie (Lax is best for standard web apps)
+SESSION_COOKIE_SAMESITE = 'Lax'
+

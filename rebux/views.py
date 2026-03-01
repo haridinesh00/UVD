@@ -57,9 +57,9 @@ class PlayGameView(FormView):
             levels_remaining = total_levels - self.request.session['current_level']
             
             if levels_remaining < 3:
-                from .tasks import generate_new_levels
-                # generate_new_levels.delay(5)
-                generate_new_levels(3)  # For testing without Celery
+                # from .tasks import generate_new_levels
+                generate_new_levels.delay(2)
+                # generate_new_levels(3)
                 
             return super().form_valid(form)
         else:
@@ -81,5 +81,5 @@ class WinGameView(TemplateView):
 class GenerateLevelsView(View):
     def get(self, request, *args, **kwargs):
         # This view can be triggered manually to generate new levels without Celery
-        generate_new_levels(3)  # Generate 5 new levels
+        generate_new_levels.delay(2)
         return redirect('play_game')

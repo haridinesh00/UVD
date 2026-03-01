@@ -1,4 +1,5 @@
 import random
+import time
 import requests
 from pydantic import BaseModel, Field
 from google import genai
@@ -6,24 +7,20 @@ from django.conf import settings
 from celery import shared_task
 from .models import PuzzleLevel
 
-# 1. NEW SCHEMA: Now asks Gemini for a Category and a Hint
+# 1. Update Schema for Wikipedia
 class RebusPuzzle(BaseModel):
     final_answer: str = Field(description="The compound word or famous phrase (e.g., 'Bill Gates')")
     reasoning: str = Field(description="Explain why the two visual clues are unambiguous NOUNS, not adjectives.")
-    category: str = Field(description="A short, 1-2 word category for the UI (e.g., 'Geography', 'Movie', 'Tech')")
-    hint: str = Field(description="A helpful textual hint for the player (e.g., 'A famous wizard with a scar')")
-    search_term_1: str = Field(description="A highly specific, single concrete NOUN.")
-    search_term_2: str = Field(description="A highly specific, single concrete NOUN.")
+    category: str = Field(description="A short, 1-2 word category for the UI")
+    hint: str = Field(description="A helpful textual hint for the player")
+    search_term_1: str = Field(description="A specific Wikipedia article title (e.g., 'Apple', 'Taj Mahal').")
+    search_term_2: str = Field(description="A specific Wikipedia article title (e.g., 'Tree', 'George Washington').")
 
 class PuzzleList(BaseModel):
     puzzles: list[RebusPuzzle]
 
 @shared_task
 def generate_new_levels(num_levels=5):
-    """
-    Calls Gemini to generate advanced puzzle concepts, fetches Unsplash images, 
-    and saves the complete levels to the database.
-    """
     print(f"🧠 Asking Gemini to generate {num_levels} new ADVANCED puzzles...")
     
     recent_levels = PuzzleLevel.objects.order_by('-level_number')[:50]
@@ -31,26 +28,27 @@ def generate_new_levels(num_levels=5):
     used_answers_str = ", ".join(used_answers) if used_answers else "None"
 
     themes = [
-        "World Geography and Famous Landmarks",
-        "Historical Events and Famous Historical Figures",
-        "General Science, Astronomy, and Nature Concepts",
-        "General Pop Culture and Blockbuster Movies",
-        # "Complex Compound Words"
+        "World Geography and Landmarks",
+        "Historical Events and Figures",
+        "Pop Culture and Blockbuster Movies",
+        "Retro Video Games",
+        "Malayalam Cinema",
+        "Complex Compound Words"
+        "Famous brands"
     ]
     selected_theme = random.choice(themes)
-    print(f"🎲 Selected Theme for this batch: {selected_theme}")
-
+    
     client = genai.Client(api_key=settings.GEMINI_API_KEY)
     
+    # 2. Update Prompt for Wikipedia
     prompt = f"""
     You are an expert puzzle designer making highly difficult, clever Rebus visual puzzles.
     Generate {num_levels} puzzles strictly based on this theme: {selected_theme}.
     
-    CRITICAL RULES FOR STOCK PHOTOGRAPHY:
-    1. NO ADJECTIVES OR ABSTRACT CONCEPTS. Do not use words like 'hairy', 'fast', 'cold'.
-    2. USE CONCRETE, UNAMBIGUOUS NOUNS ONLY. If you want 'hair', search for 'hair comb'.
-    3. SINGLE SUBJECT FOCUS. The object must be easily recognizable as the main subject of a photo.
-    4. DO NOT generate ANY of these previously used answers: {used_answers_str}.
+    CRITICAL RULES:
+    1. We are using the Wikipedia API to fetch images. 
+    2. Your search_term_1 and search_term_2 MUST be exact, literal Wikipedia article titles (e.g., 'Lego', 'Rubik\\'s Cube', 'Mohanlal'). Do not use generic descriptive sentences.
+    3. DO NOT generate ANY of these previously used answers: {used_answers_str}.
     """
     
     response = client.models.generate_content(
@@ -66,12 +64,14 @@ def generate_new_levels(num_levels=5):
     puzzle_data = response.parsed
     
     for item in puzzle_data.puzzles:
-        print(f"\n🔍 Fetching images for: {item.final_answer}")
-        print(f"   Reasoning: {item.reasoning}")
-        print(f"   Clues: {item.search_term_1} + {item.search_term_2}")
+        print(f"\n🔍 Fetching Wikipedia images for: {item.final_answer}")
         
-        img1_url = fetch_unsplash_image(item.search_term_1)
-        img2_url = fetch_unsplash_image(item.search_term_2)
+        # 3. THE FIX: Pass only ONE argument. No more ddg_client!
+        img1_url = fetch_image(item.search_term_1)
+        time.sleep(1) # A polite 1-second delay for Wikipedia's servers
+        
+        img2_url = fetch_image(item.search_term_2)
+        time.sleep(1)
         
         if img1_url and img2_url:
             last_level = PuzzleLevel.objects.order_by('-level_number').first()
@@ -82,29 +82,69 @@ def generate_new_levels(num_levels=5):
                 image_1_url=img1_url, 
                 image_2_url=img2_url,
                 correct_answer=item.final_answer,
-                category=item.category, # SAVING THE NEW DATA
-                hint=item.hint          # SAVING THE NEW DATA
+                category=item.category,
+                hint=item.hint
             )
             print(f"✅ Successfully generated and saved level {new_level_num}!")
         else:
-            print(f"❌ Failed to find good stock images for {item.final_answer}. Skipping.")
+            print(f"❌ Failed to fetch images for {item.final_answer}. Skipping.")
 
-def fetch_unsplash_image(query):
+def fetch_image(query):
     """
-    Hits the Unsplash API and returns the URL for the first 'regular' sized image result.
-    Injects hidden keywords to force clean, uncluttered photos.
+    Fetches the main image for a Wikipedia article.
+    Includes a User-Agent header to bypass Wikipedia's bot-blocker.
     """
-    api_key = settings.UNSPLASH_API_KEY 
-    optimized_query = f"{query} minimalist isolated single object"
-    url = f"https://api.unsplash.com/search/photos?query={optimized_query}&per_page=1&content_filter=high"
-    headers = {"Authorization": f"Client-ID {api_key}"}
+    # 1. THE FIX: Create a polite caller ID for Wikipedia
+    headers = {
+        'User-Agent': 'RebuxGameBot/1.0 (Educational Rebus Game Backend)'
+    }
+    
+    search_url = "https://en.wikipedia.org/w/api.php"
+    search_params = {
+        "action": "query",
+        "format": "json",
+        "list": "search",
+        "srsearch": query,
+        "utf8": 1,
+        "srlimit": 1
+    }
     
     try:
-        res = requests.get(url, headers=headers)
-        res.raise_for_status() 
-        data = res.json()
-        if data.get('results') and len(data['results']) > 0:
-            return data['results'][0]['urls']['regular']
+        # Pass the headers into the first request
+        search_res = requests.get(search_url, params=search_params, headers=headers, timeout=10)
+        
+        # If Wikipedia still rejects us, print the exact reason instead of crashing
+        if search_res.status_code != 200:
+            print(f"Wikipedia rejected search for '{query}': {search_res.status_code}")
+            return None
+            
+        search_data = search_res.json()
+        
+        if not search_data.get('query', {}).get('search'):
+            return None
+            
+        title = search_data['query']['search'][0]['title']
+        
+        image_url = f"https://en.wikipedia.org/w/api.php"
+        image_params = {
+            "action": "query",
+            "format": "json",
+            "prop": "pageimages",
+            "titles": title,
+            "pithumbsize": 800
+        }
+        
+        # Pass the headers into the second request too!
+        img_res = requests.get(image_url, params=image_params, headers=headers, timeout=10)
+        img_data = img_res.json()
+        
+        pages = img_data.get('query', {}).get('pages', {})
+        
+        for page_id, page_data in pages.items():
+            if 'thumbnail' in page_data:
+                return page_data['thumbnail']['source']
+                
     except Exception as e:
-        print(f"Error fetching image for '{query}': {e}")
+        print(f"Wikipedia fetch error for '{query}': {e}")
+        
     return None
